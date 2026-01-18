@@ -1,0 +1,43 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    @apply bg-gray-100 dark:bg-[#020617];
+  }
+}
+
+@layer components {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer utilities {
+    .animate-marquee {
+      animation: marquee 20s linear infinite;
+    }
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    
+    .animate-pop-in { 
+        animation: pop-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes pop-in { 
+        from { transform: scale(0.9); opacity: 0; } 
+        to { transform: scale(1); opacity: 1; }
+    }
+}

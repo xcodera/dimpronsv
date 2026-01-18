@@ -1,0 +1,8 @@
+{
+  "name": "DimPRO NSV",
+  "description": "Aplikasi DimPro dibanguan dengan NextJs, Supabase,Vercel,Tailwind,Lucid dll",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
