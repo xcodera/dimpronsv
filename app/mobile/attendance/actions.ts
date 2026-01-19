@@ -13,8 +13,10 @@ export async function clockIn(latitude: number, longitude: number, locationName:
     }
 
     const now = new Date();
-    const clockInTime = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    
+    // Use en-GB to ensure HH:mm:ss format (colons instead of dots) for database compatibility
+    const clockInTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const attendanceDate = now.toISOString().split('T')[0];
+
     // Determine status (late or present)
     const isLate = now.getHours() > 9 || (now.getHours() === 9 && now.getMinutes() > 15);
     const status = isLate ? 'late' : 'present';
@@ -23,6 +25,7 @@ export async function clockIn(latitude: number, longitude: number, locationName:
         .from('attendance')
         .insert({
             profile_id: user.id,
+            attendance_date: attendanceDate,
             clock_in: clockInTime,
             status: status,
             latitude: latitude,
@@ -34,9 +37,9 @@ export async function clockIn(latitude: number, longitude: number, locationName:
 
     if (error) {
         console.error('Clock-in error:', error);
-        return { success: false, error: 'Failed to clock in.' };
+        return { success: false, error: `Failed to clock in: ${error.message}` };
     }
-    
+
     revalidatePath('/mobile/attendance');
     return { success: true, data };
 }
@@ -49,7 +52,7 @@ export async function clockOut(attendanceId: string) {
         return { success: false, error: 'User not authenticated' };
     }
 
-    const clockOutTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const clockOutTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
     const { data, error } = await supabase
         .from('attendance')
@@ -58,12 +61,12 @@ export async function clockOut(attendanceId: string) {
         .eq('profile_id', user.id)
         .select()
         .single();
-    
+
     if (error) {
         console.error('Clock-out error:', error);
-        return { success: false, error: 'Failed to clock out.' };
+        return { success: false, error: `Failed to clock out: ${error.message}` };
     }
-    
+
     revalidatePath('/mobile/attendance');
     return { success: true, data };
 }
@@ -84,18 +87,19 @@ export async function submitLeave(status: string, notes: string) {
         .from('attendance')
         .insert({
             profile_id: user.id,
+            attendance_date: new Date().toISOString().split('T')[0],
             status: dbStatus,
             permission_type: permissionType,
             notes: notes,
         })
         .select()
         .single();
-    
+
     if (error) {
         console.error('Leave submission error:', error);
-        return { success: false, error: 'Failed to submit leave request.' };
+        return { success: false, error: `Failed to submit leave request: ${error.message}` };
     }
-    
+
     revalidatePath('/mobile/attendance');
     return { success: true, data };
 }
