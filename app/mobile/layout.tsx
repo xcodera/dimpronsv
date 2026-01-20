@@ -2,7 +2,9 @@
 import React from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from 'next/link';
 import BottomNav from "./_components/bottom-nav";
+import { ThemeProvider } from "./_components/theme-provider";
 
 export default async function MobileLayout({
   children,
@@ -19,11 +21,13 @@ export default async function MobileLayout({
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto overflow-hidden relative shadow-2xl transition-colors duration-300 bg-[#0f172a]">
-      <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
-        {children}
-      </main>
-      <BottomNav />
-    </div>
+    <ThemeProvider>
+      <div className="flex flex-col h-screen max-w-md mx-auto overflow-hidden relative shadow-2xl transition-colors duration-300 bg-[#0f172a]">
+        <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
+          {children}
+        </main>
+        <BottomNav />
+      </div>
+    </ThemeProvider>
   );
 }

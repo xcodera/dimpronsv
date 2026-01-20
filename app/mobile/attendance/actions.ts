@@ -13,7 +13,6 @@ export async function clockIn(latitude: number, longitude: number, locationName:
     }
 
     const now = new Date();
-    // Use en-GB to ensure HH:mm:ss format (colons instead of dots) for database compatibility
     const clockInTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     const attendanceDate = now.toISOString().split('T')[0];
 
@@ -21,27 +20,54 @@ export async function clockIn(latitude: number, longitude: number, locationName:
     const isLate = now.getHours() > 9 || (now.getHours() === 9 && now.getMinutes() > 15);
     const status = isLate ? 'late' : 'present';
 
-    const { data, error } = await supabase
+    // Check if exists
+    const { data: existing } = await supabase
         .from('attendance')
-        .insert({
-            profile_id: user.id,
-            attendance_date: attendanceDate,
-            clock_in: clockInTime,
-            status: status,
-            latitude: latitude,
-            longitude: longitude,
-            location_name: locationName,
-        })
-        .select()
-        .single();
+        .select('attendance_id')
+        .eq('profile_id', user.id)
+        .eq('attendance_date', attendanceDate)
+        .maybeSingle();
 
-    if (error) {
-        console.error('Clock-in error:', error);
-        return { success: false, error: `Failed to clock in: ${error.message}` };
+    let result;
+
+    if (existing) {
+        // Update
+        result = await supabase
+            .from('attendance')
+            .update({
+                clock_in: clockInTime,
+                status: status,
+                latitude: latitude,
+                longitude: longitude,
+                location_name: locationName,
+            })
+            .eq('attendance_id', existing.attendance_id)
+            .select()
+            .single();
+    } else {
+        // Insert
+        result = await supabase
+            .from('attendance')
+            .insert({
+                profile_id: user.id,
+                attendance_date: attendanceDate,
+                clock_in: clockInTime,
+                status: status,
+                latitude: latitude,
+                longitude: longitude,
+                location_name: locationName,
+            })
+            .select()
+            .single();
+    }
+
+    if (result.error) {
+        console.error('Clock-in error:', result.error);
+        return { success: false, error: `Failed to clock in: ${result.error.message}` };
     }
 
     revalidatePath('/mobile/attendance');
-    return { success: true, data };
+    return { success: true, data: result.data };
 }
 
 export async function clockOut(attendanceId: string) {
